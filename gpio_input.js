@@ -1,35 +1,28 @@
 "use strict";
 
-var InputPin = require('./gpio_pin').InputPin;
+var InputPin = require('./gpio_base').InputPin;
+var extend = require('./helpers.js').extend;
 
 var inputModule = (function(){
 
   var HIGH = 1;
   var LOW = 0;
 
-  var InputDevice = function(pinNumber, opts){
-    var defaults = {};
-
-    this.options = opts || defaults;
-
-    InputPin.call(this, pinNumber, this.options);
-  };
-
-  InputDevice.prototype = Object.create(InputPin.prototype);
-
   var Switch = function(pinNumber, opts){
+    InputPin.call(this, pinNumber, opts);
+
     var defaults = {
       pullup: true
     };
 
-    this.options = opts || defaults;
+    this.options = extend(defaults, this.options);
+    
     if(!this.options.hasOwnProperty('pullup'))
       this.options.pullup = defaults.pullup;
 
-    InputDevice.call(this, pinNumber, opts);
   };
 
-  Switch.prototype = Object.create(InputDevice.prototype);
+  Switch.prototype = Object.create(InputPin.prototype);
 
   Switch.prototype.isOn = function(){
     this.value = this.read();
@@ -50,7 +43,6 @@ var inputModule = (function(){
   };
 
   return {
-    InputDevice: InputDevice,
     Switch: Switch,
     Button: Button
   };

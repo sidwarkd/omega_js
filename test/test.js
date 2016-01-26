@@ -5,16 +5,14 @@ var fs = require('fs');
 var mock = require('mock-fs');
 var should = require('chai').should();
 
-var GPIOPin = require('../gpio_pin').GPIOPin;
-var InputPin = require('../gpio_pin').InputPin;
-var OutputPin = require('../gpio_pin').OutputPin;
+var GPIOPin = require('../gpio_base').GPIOPin;
+var InputPin = require('../gpio_base').InputPin;
+var OutputPin = require('../gpio_base').OutputPin;
 
-var OutputDevice = require('../gpio_output').OutputDevice;
 var LED = require('../gpio_output').LED;
 var Relay = require('../gpio_output').Relay;
 var Buzzer = require('../gpio_output').Buzzer;
 
-var InputDevice = require('../gpio_input').InputDevice;
 var Switch = require('../gpio_input').Switch;
 var Button = require('../gpio_input').Button;
 
@@ -105,6 +103,32 @@ describe('GPIOPin', function(){
     });
   });
   describe('OutputPin', function(){
+    var outputDevice;
+
+    before(function(){
+      mock({
+        '/sys/class/gpio/gpiochip0/subsystem':{
+          'export': '',
+          'unexport': ''
+        },
+        '/sys/class/gpio/gpio0':{
+          'value':'',
+          'direction':'out'
+        },
+        '/sys/class/gpio/gpio1':{
+          'value':'',
+          'direction':'out'
+        }
+      });
+    });
+
+    afterEach(function(){
+      fs.writeFileSync('/sys/class/gpio/gpio0/value', '');
+      fs.writeFileSync('/sys/class/gpio/gpio1/value', '');
+      fs.writeFileSync('/sys/class/gpio/gpiochip0/subsystem/export', '');
+      fs.writeFileSync('/sys/class/gpio/gpiochip0/subsystem/unexport', '');
+    });
+
     describe('creation', function(){
       var outputPin;
       before(function(){
@@ -137,8 +161,9 @@ describe('GPIOPin', function(){
       });
 
       it('should write pin state', function(){
+        outputPin.write(0);
         var preState = fs.readFileSync(outputPin.valuePath);
-        String(preState).should.equal('');
+        String(preState).should.equal('0');
         outputPin.write(1);
         var postState = fs.readFileSync(outputPin.valuePath);
         String(postState).should.equal('1');
@@ -165,6 +190,63 @@ describe('GPIOPin', function(){
         String(data).should.equal('1');
       });
     });
+    describe('options', function(){
+      var outputPin;
+
+      describe('#active_low', function(){
+        describe('{active_low:true}', function(){
+          before(function(){
+            outputPin = new OutputPin(0, {skipVerify:true, active_low:true});
+          });
+
+          it('should initialize the state to high by default', function(){
+            outputPin.value.should.equal(1);
+          });
+
+          it('should pull low for on()', function(){
+            outputPin.on();
+            // check object value
+            outputPin.value.should.equal(0);
+            var value = fs.readFileSync(outputPin.valuePath);
+            // check actual sysfs value
+            String(value).should.equal('0');
+          });
+          it('should pull high for off()', function(){
+            outputPin.off();
+            // check object value
+            outputPin.value.should.equal(1);
+            var value = fs.readFileSync(outputPin.valuePath);
+            // check actual sysfs value
+            String(value).should.equal('1');
+          });
+        });
+      });
+
+      describe('#initial_state', function(){
+        describe('{initial_state:"off"}', function(){
+          before(function(){
+            outputPin = new OutputPin(0, {skipVerify:true, initial_state:"off"});
+          });
+          it('should initialize the pin low', function(){
+            outputPin.value.should.equal(0);
+            var value = fs.readFileSync(outputPin.valuePath);
+            // check actual sysfs value
+            String(value).should.equal('0');
+          });
+        });
+        describe('{initial_state:"on"}', function(){
+          before(function(){
+            outputPin = new OutputPin(0, {skipVerify:true, initial_state:"on"});
+          });
+          it('should initialize the pin high', function(){
+            outputPin.value.should.equal(1);
+            var value = fs.readFileSync(outputPin.valuePath);
+            // check actual sysfs value
+            String(value).should.equal('1');
+          });
+        });
+      });
+    });
   });
   describe('Invalid Pin', function(){
     describe('creation', function(){
@@ -182,89 +264,6 @@ describe('GPIOPin', function(){
         var p1 = new InputPin(0, {skipVerify:true});
         var test = function(){var p2 = new InputPin(0)};
         test.should.Throw(Error, /is already in use/);
-      });
-    });
-  });
-});
-
-describe('OutputDevice', function(){
-  var outputDevice;
-
-  before(function(){
-    mock({
-      '/sys/class/gpio/gpiochip0/subsystem':{
-        'export': '',
-        'unexport': ''
-      },
-      '/sys/class/gpio/gpio0':{
-        'value':'',
-        'direction':'out'
-      }
-    });
-  });
-
-  afterEach(function(){
-    fs.writeFileSync('/sys/class/gpio/gpio0/value', '');
-    fs.writeFileSync('/sys/class/gpio/gpiochip0/subsystem/export', '');
-    fs.writeFileSync('/sys/class/gpio/gpiochip0/subsystem/unexport', '');
-  });
-
-  after(function(){
-    mock.restore();
-  });
-
-  describe('options', function(){
-    describe('#active_low', function(){
-      describe('{active_low:true}', function(){
-        before(function(){
-          outputDevice = new OutputDevice(0, {skipVerify:true, active_low:true});
-        });
-
-        it('should initialize the state to high by default', function(){
-          outputDevice.value.should.equal(1);
-        });
-
-        it('should pull low for on()', function(){
-          outputDevice.on();
-          // check object value
-          outputDevice.value.should.equal(0);
-          var value = fs.readFileSync(outputDevice.valuePath);
-          // check actual sysfs value
-          String(value).should.equal('0');
-        });
-        it('should pull high for off()', function(){
-          outputDevice.off();
-          // check object value
-          outputDevice.value.should.equal(1);
-          var value = fs.readFileSync(outputDevice.valuePath);
-          // check actual sysfs value
-          String(value).should.equal('1');
-        });
-      });
-    });
-
-    describe('#initial_state', function(){
-      describe('{initial_state:"off"}', function(){
-        before(function(){
-          outputDevice = new OutputDevice(0, {skipVerify:true, initial_state:"off"});
-        });
-        it('should initialize the pin low', function(){
-          outputDevice.value.should.equal(0);
-          var value = fs.readFileSync(outputDevice.valuePath);
-          // check actual sysfs value
-          String(value).should.equal('0');
-        });
-      });
-      describe('{initial_state:"on"}', function(){
-        before(function(){
-          outputDevice = new OutputDevice(0, {skipVerify:true, initial_state:"on"});
-        });
-        it('should initialize the pin high', function(){
-          outputDevice.value.should.equal(1);
-          var value = fs.readFileSync(outputDevice.valuePath);
-          // check actual sysfs value
-          String(value).should.equal('1');
-        });
       });
     });
   });
@@ -295,8 +294,8 @@ describe('LED', function(){
     mock.restore();
   });
 
-  it('should be an OutputDevice', function(){
-    (led instanceof OutputDevice).should.equal(true);
+  it('should be an OutputPin', function(){
+    (led instanceof OutputPin).should.equal(true);
   });
   describe('methods', function(){
     describe('#on', function(){
@@ -361,8 +360,8 @@ describe('Relay', function(){
     mock.restore();
   });
 
-  it('should be an OutputDevice', function(){
-    (relay instanceof OutputDevice).should.equal(true);
+  it('should be an OutputPin', function(){
+    (relay instanceof OutputPin).should.equal(true);
   });
 
   describe('#on', function(){
@@ -416,8 +415,8 @@ describe('Buzzer', function(){
     mock.restore();
   });
 
-  it('should be an OutputDevice', function(){
-    (buzzer instanceof OutputDevice).should.equal(true);
+  it('should be an OutputPin', function(){
+    (buzzer instanceof OutputPin).should.equal(true);
   });
 
   describe('#on', function(){
@@ -442,45 +441,6 @@ describe('Buzzer', function(){
       buzzer.toggle();
       var newValue = buzzer.value;
       newValue.should.not.equal(oldValue);
-    });
-  });
-});
-
-describe('InputDevice', function(){
-  var inputDevice;
-
-  before(function(){
-    mock({
-      '/sys/class/gpio/gpiochip0/subsystem':{
-        'export': '',
-        'unexport': ''
-      },
-      '/sys/class/gpio/gpio0':{
-        'value':'1',
-        'direction':'in'
-      }
-    });
-  });
-
-  afterEach(function(){
-    fs.writeFileSync('/sys/class/gpio/gpio0/value', '1');
-    fs.writeFileSync('/sys/class/gpio/gpiochip0/subsystem/export', '');
-  });
-
-  after(function(){
-    mock.restore();
-  });
-
-  describe('methods', function(){
-    before(function(){
-      inputDevice = new InputDevice(0, {skipVerify:true});
-    });
-
-    describe('#read', function(){
-      it('should return the current value on the pin', function(){
-        inputDevice.read().should.be.a('number');
-        inputDevice.read().should.equal(1);
-      });
     });
   });
 });

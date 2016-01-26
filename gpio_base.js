@@ -1,6 +1,7 @@
 "use strict";
 var fs = require("fs");
 var path = require("path");
+var extend = require('./helpers').extend;
 
 var GPIOModule = (function(){
   // TODO: move these paths to a config file
@@ -33,7 +34,6 @@ var GPIOModule = (function(){
 
   // Pin object used for tracking pins
   var GPIOPin = function(pinNumber, direction, opts){
-    var self = this;
     this.options = opts || {};
 
     _verifyPinIsValid(pinNumber);
@@ -47,6 +47,7 @@ var GPIOModule = (function(){
     this.valuePath = path.join(_gpioPath, "gpio" + pinNumber, "value");
     this.directionPath = path.join(_gpioPath, "gpio" + pinNumber, "direction");
     this.setDirection(direction);
+    this.value = null;
   };
 
   // "static" members of pin
@@ -62,7 +63,8 @@ var GPIOModule = (function(){
     if(this.direction === _OUTPUT){
       throw new Error("Cannot read from a pin that is configured as an output");
     }
-    return parseInt(fs.readFileSync(this.valuePath), 10);
+    this.value = parseInt(fs.readFileSync(this.valuePath), 10);
+    return this.value;
   };
 
   GPIOPin.prototype.write = function(value){
@@ -72,6 +74,7 @@ var GPIOModule = (function(){
 
     value = !!value ? "1" : "0";
     fs.writeFileSync(this.valuePath, value);
+    this.value = value === "1" ? 1 : 0;
   };
 
   GPIOPin.prototype.destroy = function(){
@@ -82,6 +85,7 @@ var GPIOModule = (function(){
   var InputPin = function(pinNumber, opts){
     GPIOPin.call(this, pinNumber, _INPUT, opts || {});
 
+    // Set initial value;
     this.value = this.read();
   };
 
@@ -89,9 +93,58 @@ var GPIOModule = (function(){
 
   var OutputPin = function(pinNumber, opts){
     GPIOPin.call(this, pinNumber, _OUTPUT, opts || {});
+
+    var defaults = {
+      initial_state: 'off',
+      active_low: false
+    };
+
+    this.options = extend(defaults, this.options);
+
+    if((/on/).test(this.options.initial_state)){
+      this.is_on = true;
+    }
+    else{
+      this.is_on = false;
+    }
+
+    // Set the pin to the right initial state
+    if(this.options.active_low){
+      this.value = Number(!this.is_on);
+    }
+    else{
+      this.value = Number(this.is_on);
+    }
+
+    this.write(this.value);
   };
 
   OutputPin.prototype = Object.create(GPIOPin.prototype);
+
+  OutputPin.prototype.on = function(){
+    if(this.options.active_low){
+      this.write(0);
+    }
+    else{
+      this.write(1);
+    }
+    this.is_on = true;
+  };
+
+  OutputPin.prototype.off = function(){
+    if(this.options.active_low){
+      this.write(1);
+    }
+    else{
+      this.write(0);
+    }
+    this.is_on = false;
+  };
+
+  OutputPin.prototype.toggle = function(){
+    this.value ^= 1;
+    this.write(this.value);
+  };
 
   return {
     GPIOPin: GPIOPin,
