@@ -11,17 +11,18 @@ var gpio = require('omega_gpio');
 var Button = gpio.Button;
 var LED = gpio.LED;
 
-// Button connected to pin 23 that is wired to read a digital low when pressed
-var myButton = new Button(23, {when_pressed:"low"});
+// Button connected to pin 23 that is wired to read a digital high when pressed
+var myButton = new Button(23);
 
 // LED connected to pin 26 that is wired so that it turns on when the output 
-// pin is set to a digital high
-var myLED = new LED(26);
+// pin is set to a digital low
+var myLED = new LED(26, {on_when:"low"});
 
 // Clean up the pins on exit
 process.on('SIGINT', function(){
     myButton.destroy();
     myLED.destroy();
+    process.exit();
 });
 
 while(true){
@@ -32,7 +33,6 @@ while(true){
         myLED.off();
     }
 }
-
 ```
 
 ## Installation
@@ -100,7 +100,7 @@ Cleans up the pin and releases it back to the OS.
 ### Example
 ```js
 // A switch connected to pin 0 that is wired to register a high voltage when on
-var Switch = require("./gpio_input").Switch;
+var Switch = require("omega_gpio").Switch;
 var sw = new Switch(0);
 
 // A switch connected to pin 1 that is wired to register a low voltage when on
@@ -135,7 +135,7 @@ Cleans up the pin and releases it back to the OS.
 ### Example
 ```js
 // A button connected to pin 0 that is wired to register a high voltage when pressed
-var Button = require("./gpio_input").Button;
+var Button = require("omega_gpio").Button;
 var btn1 = new Button(0);
 
 // A button connected to pin 1 that is wired to register a low voltage when pressed
@@ -182,7 +182,7 @@ Cleans up the pin and releases it back to the OS.
 ### Example
 ```js
 // An LED connected to pin 0 that turns on when the pin is a digital high
-var LED = require("./gpio_output").LED;
+var LED = require("omega_gpio").LED;
 var led = new LED(0);
 led.on();
 led.off();
@@ -216,7 +216,7 @@ Cleans up the pin and releases it back to the OS.
 ### Example
 ```js
 // A relay connected to pin 0 that will active when a high voltage is set on pin 0
-var Relay = require("./gpio_output").Relay;
+var Relay = require("omega_gpio").Relay;
 var relay = new Relay(0);
 relay.on();
 relay.off();
@@ -250,7 +250,7 @@ Cleans up the pin and releases it back to the OS.
 ### Example
 ```js
 // A buzzer connected to pin 0 that will make a sound when a high voltage is set on pin 0
-var Buzzer = require("./gpio_output").Buzzer;
+var Buzzer = require("omega_gpio").Buzzer;
 var buzzer = new Buzzer(0);
 buzzer.on();
 buzzer.off();
