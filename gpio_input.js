@@ -12,21 +12,24 @@ var inputModule = (function(){
     InputPin.call(this, pinNumber, opts);
 
     var defaults = {
-      pullup: true
+      on_when: "high"
     };
 
     this.options = extend(defaults, this.options);
-    
-    if(!this.options.hasOwnProperty('pullup'))
-      this.options.pullup = defaults.pullup;
 
+    if((/low/).test(this.options.on_when)){
+      this.active_low = true;
+    }
+    else{
+      this.active_low = false;
+    }
   };
 
   Switch.prototype = Object.create(InputPin.prototype);
 
   Switch.prototype.isOn = function(){
     this.value = this.read();
-    if(this.options.pullup)
+    if(this.active_low)
       return Boolean(!this.value);
     else
       return Boolean(this.value);
@@ -34,6 +37,19 @@ var inputModule = (function(){
 
   var Button = function(pinNumber, opts){
     Switch.call(this, pinNumber, opts);
+
+    var defaults = {
+      when_pressed: "high"
+    };
+
+    this.options = extend(defaults, this.options);
+
+    if((/low/).test(this.options.when_pressed)){
+      this.active_low = true;
+    }
+    else{
+      this.active_low = false;
+    }
   }
 
   Button.prototype = Object.create(Switch.prototype);

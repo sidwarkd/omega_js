@@ -5,16 +5,17 @@ var fs = require('fs');
 var mock = require('mock-fs');
 var should = require('chai').should();
 
+var gpio = require('../index');
 var GPIOPin = require('../gpio_base').GPIOPin;
-var InputPin = require('../gpio_base').InputPin;
-var OutputPin = require('../gpio_base').OutputPin;
+var InputPin = gpio.InputPin;
+var OutputPin = gpio.OutputPin;
 
-var LED = require('../gpio_output').LED;
-var Relay = require('../gpio_output').Relay;
-var Buzzer = require('../gpio_output').Buzzer;
+var LED = gpio.LED;
+var Relay = gpio.Relay;
+var Buzzer = gpio.Buzzer;
 
-var Switch = require('../gpio_input').Switch;
-var Button = require('../gpio_input').Button;
+var Switch = gpio.Switch;
+var Button = gpio.Button;
 
 
 describe('GPIOPin', function(){
@@ -297,7 +298,7 @@ describe('LED', function(){
   it('should be an OutputPin', function(){
     (led instanceof OutputPin).should.equal(true);
   });
-  describe('methods', function(){
+  describe('functions', function(){
     describe('#on', function(){
       it('should turn the led on', function(){
         led.on();
@@ -333,6 +334,41 @@ describe('LED', function(){
       });
     });
   });
+
+  describe('options', function(){
+    describe('#on_when', function(){
+      describe('{on_when:"high"} (default)', function(){
+        before(function(){
+          led = new LED(0, {skipVerify:true, on_when:"high"});
+        });
+        it('should set pin high when on() is called', function(){
+          led.on();
+          var value = fs.readFileSync(led.valuePath);
+          String(value).should.equal('1');
+        });
+        it('should set pin low when off() is called', function(){
+          led.off();
+          var value = fs.readFileSync(led.valuePath);
+          String(value).should.equal('0');
+        });
+      });
+      describe('{on_when:"low"}', function(){
+        before(function(){
+          led = new LED(0, {skipVerify:true, on_when:"low"});
+        });
+        it('should set pin low when on() is called', function(){
+          led.on();
+          var value = fs.readFileSync(led.valuePath);
+          String(value).should.equal('0');
+        });
+        it('should set pin high when off() is called', function(){
+          led.off();
+          var value = fs.readFileSync(led.valuePath);
+          String(value).should.equal('1');
+        });
+      });
+    });
+  });
 });
 
 describe('Relay', function(){
@@ -364,28 +400,65 @@ describe('Relay', function(){
     (relay instanceof OutputPin).should.equal(true);
   });
 
-  describe('#on', function(){
-    it('should turn the relay on', function(){
-      relay.on();
-      relay.value.should.equal(1);
-      var value = fs.readFileSync(relay.valuePath);
-      String(value).should.equal('1');
+  describe('functions', function(){
+    describe('#on', function(){
+      it('should turn the relay on', function(){
+        relay.on();
+        relay.value.should.equal(1);
+        var value = fs.readFileSync(relay.valuePath);
+        String(value).should.equal('1');
+      });
+    });
+    describe('#off', function(){
+      it('should turn the relay off', function(){
+        relay.off();
+        relay.value.should.equal(0);
+        var value = fs.readFileSync(relay.valuePath);
+        String(value).should.equal('0');
+      });
+    });
+    describe('#toggle', function(){
+      it('should toggle the state of the relay', function(){
+        var oldValue = relay.value;
+        relay.toggle();
+        var newValue = relay.value;
+        newValue.should.not.equal(oldValue);
+      });
     });
   });
-  describe('#off', function(){
-    it('should turn the relay off', function(){
-      relay.off();
-      relay.value.should.equal(0);
-      var value = fs.readFileSync(relay.valuePath);
-      String(value).should.equal('0');
-    });
-  });
-  describe('#toggle', function(){
-    it('should toggle the state of the relay', function(){
-      var oldValue = relay.value;
-      relay.toggle();
-      var newValue = relay.value;
-      newValue.should.not.equal(oldValue);
+
+  describe('options', function(){
+    describe('#on_when', function(){
+      describe('{on_when:"high"} (default)', function(){
+        before(function(){
+          relay = new Relay(0, {skipVerify:true, on_when:"high"});
+        });
+        it('should set pin high when on() is called', function(){
+          relay.on();
+          var value = fs.readFileSync(relay.valuePath);
+          String(value).should.equal('1');
+        });
+        it('should set pin low when off() is called', function(){
+          relay.off();
+          var value = fs.readFileSync(relay.valuePath);
+          String(value).should.equal('0');
+        });
+      });
+      describe('{on_when:"low"}', function(){
+        before(function(){
+          relay = new Relay(0, {skipVerify:true, on_when:"low"});
+        });
+        it('should set pin low when on() is called', function(){
+          relay.on();
+          var value = fs.readFileSync(relay.valuePath);
+          String(value).should.equal('0');
+        });
+        it('should set pin high when off() is called', function(){
+          relay.off();
+          var value = fs.readFileSync(relay.valuePath);
+          String(value).should.equal('1');
+        });
+      });
     });
   });
 });
@@ -419,28 +492,66 @@ describe('Buzzer', function(){
     (buzzer instanceof OutputPin).should.equal(true);
   });
 
-  describe('#on', function(){
-    it('should turn the buzzer on', function(){
-      buzzer.on();
-      buzzer.value.should.equal(1);
-      var value = fs.readFileSync(buzzer.valuePath);
-      String(value).should.equal('1');
+  describe('functions', function(){
+    describe('#on', function(){
+      it('should turn the buzzer on', function(){
+        buzzer.on();
+        buzzer.value.should.equal(1);
+        var value = fs.readFileSync(buzzer.valuePath);
+        String(value).should.equal('1');
+      });
+    });
+    describe('#off', function(){
+      it('should turn the buzzer off', function(){
+        buzzer.off();
+        buzzer.value.should.equal(0);
+        var value = fs.readFileSync(buzzer.valuePath);
+        String(value).should.equal('0');
+      });
+    });
+    describe('#toggle', function(){
+      it('should toggle the state of the buzzer', function(){
+        var oldValue = buzzer.value;
+        buzzer.toggle();
+        var newValue = buzzer.value;
+        newValue.should.not.equal(oldValue);
+      });
     });
   });
-  describe('#off', function(){
-    it('should turn the buzzer off', function(){
-      buzzer.off();
-      buzzer.value.should.equal(0);
-      var value = fs.readFileSync(buzzer.valuePath);
-      String(value).should.equal('0');
-    });
-  });
-  describe('#toggle', function(){
-    it('should toggle the state of the buzzer', function(){
-      var oldValue = buzzer.value;
-      buzzer.toggle();
-      var newValue = buzzer.value;
-      newValue.should.not.equal(oldValue);
+  
+
+  describe('options', function(){
+    describe('#on_when', function(){
+      describe('{on_when:"high"} (default)', function(){
+        before(function(){
+          buzzer = new Buzzer(0, {skipVerify:true, on_when:"high"});
+        });
+        it('should set pin high when on() is called', function(){
+          buzzer.on();
+          var value = fs.readFileSync(buzzer.valuePath);
+          String(value).should.equal('1');
+        });
+        it('should set pin low when off() is called', function(){
+          buzzer.off();
+          var value = fs.readFileSync(buzzer.valuePath);
+          String(value).should.equal('0');
+        });
+      });
+      describe('{on_when:"low"}', function(){
+        before(function(){
+          buzzer = new Buzzer(0, {skipVerify:true, on_when:"low"});
+        });
+        it('should set pin low when on() is called', function(){
+          buzzer.on();
+          var value = fs.readFileSync(buzzer.valuePath);
+          String(value).should.equal('0');
+        });
+        it('should set pin high when off() is called', function(){
+          buzzer.off();
+          var value = fs.readFileSync(buzzer.valuePath);
+          String(value).should.equal('1');
+        });
+      });
     });
   });
 });
@@ -481,38 +592,39 @@ describe('Switch', function(){
     (sw1 instanceof InputPin).should.equal(true);
   });
 
-  describe('methods', function(){
-    describe('#isOn', function(){
-      it('should return true if value is low', function(){
-        // mock a low state because default is pullup:true so an activated
-        // switch pulls the pin low
-        fs.writeFileSync(sw1.valuePath, '0');
-        sw1.isOn().should.equal(true);
-      });
-      it('should return false if value is high', function(){
-        // mock a high state
-        fs.writeFileSync(sw1.valuePath, '1');
-        sw1.isOn().should.equal(false);
-      });
-    });
-  });
-
   describe('options', function(){
-    describe('#pullup', function(){
-      describe('{pullup:false} (default)', function(){
+    describe('#on_when', function(){
+      describe('{on_when:"high"} (default)', function(){
         before(function(){
-          sw2 = new Switch(0, {skipVerify:true, pullup:false});
+          sw2 = new Switch(0, {skipVerify:true, on_when:"high"});
         });
         describe('#isOn', function(){
-          it('should return true if value is high', function(){
+          it('should return true if switch is on', function(){
             // mock a high state
             fs.writeFileSync(sw2.valuePath, '1');
             sw2.isOn().should.equal(true);
           });
-          it('should return false if value is low', function(){
+          it('should return false if switch is off', function(){
             // mock a low state
             fs.writeFileSync(sw2.valuePath, '0');
             sw2.isOn().should.equal(false);
+          });
+        });
+      });
+      describe('{on_when:"low"}', function(){
+        before(function(){
+          sw2 = new Switch(0, {skipVerify:true, on_when:"low"});
+        });
+        describe('#isOn', function(){
+          it('should return false if switch is on', function(){
+            // mock a high state
+            fs.writeFileSync(sw2.valuePath, '1');
+            sw2.isOn().should.equal(false);
+          });
+          it('should return true if switch is off', function(){
+            // mock a low state
+            fs.writeFileSync(sw2.valuePath, '0');
+            sw2.isOn().should.equal(true);
           });
         });
       });
@@ -550,18 +662,41 @@ describe('Button', function(){
     (button instanceof Switch).should.equal(true);
   });
 
-  describe('methods', function(){
-    describe('#isPressed', function(){
-      it('should return true if button is pressed', function(){
-        // mock a low state because default is pullup:true so a pressed
-        // state pulls the pin low
-        fs.writeFileSync(button.valuePath, '0');
-        button.isPressed().should.equal(true);
+  describe('options', function(){
+    describe('#when_pressed', function(){
+      describe('{when_pressed:"high"} (default)', function(){
+        before(function(){
+          button = new Button(0, {skipVerify:true, when_pressed:"high"});
+        });
+        describe('#isPressed', function(){
+          it('should return true if button is pressed', function(){
+            // mock a high state
+            fs.writeFileSync(button.valuePath, '1');
+            button.isPressed().should.equal(true);
+          });
+          it('should return false if button is NOT pressed', function(){
+            // mock a low state
+            fs.writeFileSync(button.valuePath, '0');
+            button.isPressed().should.equal(false);
+          });
+        });
       });
-      it('should return false if button is not pressed', function(){
-        // mock a high state
-        fs.writeFileSync(button.valuePath, '1');
-        button.isPressed().should.equal(false);
+      describe('{when_pressed:"low"}', function(){
+        before(function(){
+          button = new Button(0, {skipVerify:true, when_pressed:"low"});
+        });
+        describe('#isPressed', function(){
+          it('should return false if button is pressed', function(){
+            // mock a high state
+            fs.writeFileSync(button.valuePath, '1');
+            button.isPressed().should.equal(false);
+          });
+          it('should return true if button is NOT pressed', function(){
+            // mock a low state
+            fs.writeFileSync(button.valuePath, '0');
+            button.isPressed().should.equal(true);
+          });
+        });
       });
     });
   });

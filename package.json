@@ -1,6 +1,6 @@
 {
   "name": "omega_gpio",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A simple GPIO helper for the Onion Omega.",
   "main": "index.js",
   "scripts": {
@@ -20,7 +20,7 @@
     "chai": "*",
     "mock-fs": "*"
   },
-  "author": "Kevin Sidwar",
+  "author": "Kevin Sidwar <sidwarkd@hardlysoftware.com> (http://microcasts.tv)",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/sidwarkd/omega_js/issues"
