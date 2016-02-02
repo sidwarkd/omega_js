@@ -12,16 +12,23 @@ var myLED = new LED(26, {on_when:"low"});
 
 // Clean up the pins on exit
 process.on('SIGINT', function(){
+  console.log("Cleaning up...");
     myButton.destroy();
     myLED.destroy();
     process.exit();
 });
 
-while(true){
-    if(myButton.isPressed()){
-        myLED.on();
-    }
-    else{
-        myLED.off();
-    }
+// Infinite loop checking the button
+var checkButton = function(){
+  if(myButton.isPressed()){
+    myLED.on();
+  }
+  else{
+    myLED.off();
+  }
+  setImmediate(checkButton);
 }
+
+setImmediate(checkButton);
+
+

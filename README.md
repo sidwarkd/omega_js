@@ -20,19 +20,24 @@ var myLED = new LED(26, {on_when:"low"});
 
 // Clean up the pins on exit
 process.on('SIGINT', function(){
+  console.log("Cleaning up...");
     myButton.destroy();
     myLED.destroy();
     process.exit();
 });
 
-while(true){
-    if(myButton.isPressed()){
-        myLED.on();
-    }
-    else{
-        myLED.off();
-    }
+// Infinite loop checking the button
+var checkButton = function(){
+  if(myButton.isPressed()){
+    myLED.on();
+  }
+  else{
+    myLED.off();
+  }
+  setImmediate(checkButton);
 }
+
+setImmediate(checkButton);
 ```
 
 ## Installation
@@ -277,6 +282,7 @@ npm test
   * Additional abstractions for various IO modules
   * Add ```setSource``` to LED so it can be bound to an input
   * Add ```blink()``` function to LED
+  * How to initialize pin state before setting it as an output
 
 ## License
 MIT
