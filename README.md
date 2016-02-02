@@ -64,11 +64,13 @@ scp *.js root@[omega address]:[directory where you want to copy the files]
 ```
 
 ### Direct Usage
-Since the omega currently doesn't support NPM we can't use that to install the library directly on the Omega. Use **wget** in the meantime to get a simple install script that downloads the files. Just run the following from your Omega.
+Since the omega currently doesn't support NPM we can't use that to install the library directly on the Omega. Once you've developed your project using the library use **wget** in the meantime to get a simple install script that downloads the files to **~/omega_gpio** and places them in a **node_modules** folder. Just run the following from your Omega.
 
 ```sh
 wget -O - https://raw.githubusercontent.com/sidwarkd/omega_js/master/bin/install.sh | sh
 ```
+
+Then you can copy your source files into the omega_gpio folder and everything should just work.
 
 ## Usage
 Currently the library supports the following hardware abstractions:
