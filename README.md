@@ -1,5 +1,7 @@
 # omega_gpio
 
+[![Build Status](https://travis-ci.org/sidwarkd/omega_js.svg?branch=master)](https://travis-ci.org/sidwarkd/omega_js)
+
 A simple Node.js GPIO helper for the Onion Omega. This module is written in such a way to produce very readable and intuitive code. It purposely avoids using terms like "pullup/pulldown" and "active low/active_high" with the intent to be more accessible to people just getting started in hardware.
 
 Under the hood it relies on the [GPIO Sysfs Interface](https://www.kernel.org/doc/Documentation/gpio/sysfs.txt).
